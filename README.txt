@@ -1,5 +1,9 @@
+# gitakehometest
+
+
+
 *********************************Alsapagh*************************************
-Start from main mclass 'GITakeHomeTest.java'
+Start from main mclass 'GITakeHomeTest.java' but you need to create book table in hr schema firstly to deal with 
 Run the class and chose from the Below Services 
 	1) View all books
 	2) Add a book

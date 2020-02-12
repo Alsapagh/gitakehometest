@@ -3,7 +3,7 @@
 
 
 *********************************Alsapagh*************************************
-Start from main mclass 'GITakeHomeTest.java' but you need to create book table in hr schema firstly to deal with 
+Start from main mclass 'GITakeHomeTest.java' 
 Run the class and chose from the Below Services 
 	1) View all books
 	2) Add a book
@@ -12,4 +12,3 @@ Run the class and chose from the Below Services
 	5) Save and exit
 ************************************************************************
 all these code toke about 3.5 hours 
-whithout google searching except the Jar library Oracle jdbc7.jar

@@ -1,12 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package filemanager;
 
 import bookmanager.BookManager;
-import dbSource.DBSource;
 import gitakehometest.Book;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -14,12 +8,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -30,63 +18,58 @@ import java.util.Scanner;
  */
 public class FileManager {
 
-    static final String path = "Books.txt";
+    static final String PATH = "Books.txt";
     int id;
     String title;
     String author;
     String descr;
+    private List<Book> books;
 
-    public void dBToFile(boolean flag) throws ClassNotFoundException, SQLException {
-
-        Connection conn = DBSource.getConnection();
-        List<Book> data = new ArrayList<Book>();
+    public List<Book> readFromFile() {
+        List<Book> list = new ArrayList<>();
+        Book b;
         try {
-
-            Statement st = conn.createStatement();
-            ResultSet rs = st.executeQuery("SELECT ID,TITLE,AUTHOR,DESCRIPTION FROM BOOK");
-            Book b = null;
-            while (rs.next()) {
+            BufferedReader br = new BufferedReader(new FileReader(PATH));
+            String line;
+            while ((line = br.readLine()) != null) {
                 b = new Book();
-                id = rs.getInt("ID");
-                b.setId(id);
-                title = rs.getString("TITLE");
-                b.setTitle(title);
-                author = rs.getString("AUTHOR");
-                b.setAuthor(author);
-                descr = rs.getString("DESCRIPTION");
-                b.setDescription(descr);
-                data.add(b);
-                if (!flag) {
-                    System.out.println(id + "\t" + title + "\t" + author + "\t" + descr);
-                }
+                String tmp[] = line.split(",");
+                b.setId(Integer.parseInt(tmp[0]));
+                b.setTitle(tmp[1]);
+                b.setAuthor(tmp[2]);
+                b.setDescription(tmp[3]);
+                list.add(b);
             }
-            if (flag) {
-                writeToFile(data);
-            }
-
-            rs.close();
-            conn.close();
-            st.close();
-
-        } catch (Exception e) {
-            System.out.println(e);
+        } catch (IOException e) {
         }
-        if (!flag) {
-            agin();
-        }
+        this.books = list;
+        return list;
     }
 
-    private void writeToFile(java.util.List<Book> list) throws IOException {
+    public void writeToFile(boolean flag, List<Book> data) throws IOException {
+        this.books = data;
+        if (flag) {
+            FileManager.this.writeToFile(data);
+        } else {
+            for (Book b : data) {
+                System.out.println(b.getId() + "\t" + b.getTitle() + "\t" + b.getAuthor() + "\t" + b.getDescription());
+            }
+            agin();
+        }
+
+    }
+
+    private void writeToFile(List<Book> list) throws IOException {
         BufferedWriter out = null;
 
-        File file = new File(path);
+        File file = new File(PATH);
         /**
          * check if file exists delete and recreate to add data from beginning
          */
         if (file.delete()) {
-//            System.out.println("file.txt File deleted from Project root directory and recreated again");
+//            System.out.println("Books.txt File deleted from Project root directory and recreated again");
         } else {
-            System.out.println("File file.txt doesn't exist in the project root directory and have been created");
+//            System.out.println("Books file.txt doesn't exist in the project root directory and have been created");
         }
 
         out = new BufferedWriter(new FileWriter(file, true));
@@ -95,53 +78,13 @@ public class FileManager {
             out.newLine();
         }
         out.close();
-        System.out.println("Data have been written to file " + path + " successfully");
+        System.out.println("Data have been written to file " + PATH + " successfully");
 
     }
 
-    public List<Book> fileToDB() throws ClassNotFoundException, SQLException {
-
-        PreparedStatement ps = null;
-        Connection conn = DBSource.getConnection();
-        ResultSet rs = null;
-        List<Book> list = new ArrayList<Book>();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(path));
-
-            String deleteSql = "DELETE FROM BOOK";
-            ps = conn.prepareStatement(deleteSql);
-            ps.executeUpdate();
-            String line = null;
-            while ((line = br.readLine()) != null) {
-                String tmp[] = line.split(",");
-                id = Integer.parseInt(tmp[0]);
-                title = tmp[1];
-                author = tmp[2];
-                descr = tmp[3];
-//                System.out.println(id + "\t" + title + "\t" + author + "\t" + descr);
-                String sql
-                        = "INSERT INTO BOOK (ID,TITLE,AUTHOR,DESCRIPTION)values ("
-                        + id + ",'" + title + "','" + author + "','" + descr + "')";
-
-                ps = conn.prepareStatement(sql);
-                ps.executeUpdate();
-                list.add(new Book(id, title, author, descr));
-
-            }
-
-            br.close();
-            conn.close();
-            ps.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    void agin() throws ClassNotFoundException, SQLException {
+    void agin() throws IOException {
         Scanner scanner = new Scanner(System.in);  // Create a Scanner object
-        int choice = 0;
+        int choice;
         FileManager fm = new FileManager();
         BookManager bm = new BookManager();
 
@@ -154,19 +97,23 @@ public class FileManager {
         choice = scanner.nextInt();
         switch (choice) {
             case 1:
-                fm.dBToFile(false);
+                fm.writeToFile(false, books);
                 break;
             case 2:
-                bm.addBook();
+                Book b = bm.addBook(this.books.size() + 1);
+                this.books.add(b);
+                agin();
                 break;
             case 3:
-                bm.editBook();
+                books = bm.editBook(books);
+                agin();
                 break;
             case 4:
-                bm.searchForBook();
+                bm.searchForBook(books);
+                agin();
                 break;
             case 5:
-                fm.dBToFile(true);
+                fm.writeToFile(true, books);
                 break;
             default:
                 System.out.println("invalid choice :( ");
